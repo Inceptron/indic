@@ -124,8 +124,8 @@ const Product = ({ route }) => {
 
   useEffect(() => {
     AWS.config.update({
-      accessKeyId: "AKIAZLRNTB3H7QGOH4VB",
-      secretAccessKey: "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",
+      accessKeyId: "********************",
+      secretAccessKey: "****************************************",
       region: "ap-south-1",
     });
 
