@@ -165,7 +165,9 @@ const RegisterScreen = ({ navigation }) => {
           }}
         >
           <TouchableOpacity
-            onPress={() => {}}
+            onPress={() =>
+              ToastAndroid.show("Working on it.", ToastAndroid.BOTTOM)
+            }
             style={{
               backgroundColor: colors.light.secondary,
               borderRadius: 10,
@@ -179,7 +181,9 @@ const RegisterScreen = ({ navigation }) => {
             />
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => {}}
+            onPress={() =>
+              ToastAndroid.show("Working on it.", ToastAndroid.BOTTOM)
+            }
             style={{
               backgroundColor: colors.light.secondary,
               borderRadius: 10,
@@ -193,7 +197,9 @@ const RegisterScreen = ({ navigation }) => {
             />
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => {}}
+            onPress={() =>
+              ToastAndroid.show("Working on it.", ToastAndroid.BOTTOM)
+            }
             style={{
               backgroundColor: colors.light.secondary,
               borderRadius: 10,

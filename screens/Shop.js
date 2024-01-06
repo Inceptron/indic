@@ -19,18 +19,17 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { colors } from "../config/theme";
-import { ThemeContext } from "../context/ThemeContext";
-import { TabView, SceneMap } from "react-native-tab-view";
-
 import {
   Ionicons,
   AntDesign,
   MaterialCommunityIcons,
+  Feather,
 } from "@expo/vector-icons";
 import {
   BottomSheetModal,
   BottomSheetModalProvider,
 } from "@gorhom/bottom-sheet";
+import RangeSlider from "react-native-range-slider-expo";
 
 const screenWidth = Dimensions.get("window").width;
 const halfScreenWidth = screenWidth / 2;
@@ -43,22 +42,102 @@ const Shop = ({ route }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const sortSnapPoints = useMemo(() => ["25%", "50%"], []);
-  const filterSnapPoints = useMemo(() => ["25%", "75%"], []);
+  const filterSnapPoints = useMemo(() => ["25%", "50%"], []);
+  const [range, setRange] = useState({ min: 100, max: 10000 });
+
+  const handlePriceValueChange = (newRange) => {
+    setRange(newRange);
+    // Perform any additional actions when the value changes
+  };
+
+  const toValueOnChange = (newMax) => {
+    setRange((prevRange) => ({ ...prevRange, max: newMax }));
+  };
+
+  const fromValueOnChange = (newMin) => {
+    setRange((prevRange) => ({ ...prevRange, min: newMin }));
+  };
 
   const filterSheetModalRef = useRef(null);
   const sortSheetModalRef = useRef(null);
 
   const tabs = [
-    { id: 0, title: "Size", content: "Filter tab container for Size" },
-    { id: 1, title: "Color", content: "Filter tab container for Color" },
-    { id: 2, title: "Brand", content: "Filter tab container for Brand" },
-    { id: 3, title: "Rating", content: "Filter tab container for Rating" },
-    { id: 4, title: "Gender", content: "Filter tab container for Gender" },
-    { id: 5, title: "Category", content: "Filter tab container for Category" },
     {
-      id: 6,
-      title: "Price Range",
-      content: "Filter tab container for Price Range",
+      id: 0,
+      title: "Category",
+      content: (
+        <View>
+          <TouchableOpacity
+            style={styles.filterTab}
+            onPress={() => filterModalDown()}
+          >
+            <Text>
+              <Feather name="check" size={20} color="black" />
+            </Text>
+            <Text style={{ marginLeft: 20, fontSize: 16 }}>Red</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.filterTab}
+            onPress={() => filterModalDown()}
+          >
+            <Text>
+              <Feather name="check" size={20} color="black" />
+            </Text>
+            <Text style={{ marginLeft: 20, fontSize: 16 }}>Green</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.filterTab}
+            onPress={() => filterModalDown()}
+          >
+            <Text>
+              <Feather name="check" size={20} color="black" />
+            </Text>
+            <Text style={{ marginLeft: 20, fontSize: 16 }}>Black</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.filterTab}
+            onPress={() => filterModalDown()}
+          >
+            <Text>
+              <Feather name="check" size={20} color="black" />
+            </Text>
+            <Text style={{ marginLeft: 20, fontSize: 16 }}>White</Text>
+          </TouchableOpacity>
+        </View>
+      ),
+    },
+    {
+      id: 1,
+      title: "Price",
+      content: (
+        <View>
+          <Text>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "600",
+              }}
+            >
+              Price range between:{" "}
+            </Text>
+            ₹{range.min} - ₹{range.max}
+          </Text>
+          <RangeSlider
+            containerStyle={{ width: 220, height: 80 }}
+            gravity={"center"}
+            min={100}
+            max={10000}
+            step={1}
+            selectionColor="#3df"
+            value={range}
+            blankColor="#f618"
+            toValueOnChange={(value) => toValueOnChange(value)}
+            onValueChanged={(value) => handlePriceValueChange(value)}
+            styleSize="small"
+            fromValueOnChange={(value) => fromValueOnChange(value)}
+          />
+        </View>
+      ),
     },
   ];
 
@@ -80,54 +159,21 @@ const Shop = ({ route }) => {
     sortSheetModalRef.current?.present();
   }, []);
 
+  const fetchProducts = async () => {
+    setIsLoading(true);
+    fetch("https://indic-fusion.vercel.app/api/products")
+      .then((response) => response.json())
+      .then((data) => {
+        setProducts(data);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        ToastAndroid.show(error, ToastAndroid.SHORT);
+        setIsLoading(false);
+      });
+  };
+
   useEffect(() => {
-    const fetchProducts = async () => {
-      const limit = "20";
-
-      if (query == undefined) {
-        const url = "https://dummyjson.com/products";
-
-        try {
-          const response = await fetch(url);
-          const result = await response.json();
-          setProducts(result.products);
-          setIsLoading(false);
-        } catch (error) {
-          ToastAndroid.show(error, ToastAndroid.SHORT);
-          setIsLoading(false);
-        }
-      } else {
-        const url = "https://dummyjson.com/products/search?q=" + query;
-
-        try {
-          const response = await fetch(url);
-          const result = await response.json();
-          setProducts(result.products);
-          if (result.total == 0) {
-            const url = "https://dummyjson.com/products";
-
-            try {
-              const response = await fetch(url);
-              const result = await response.json();
-              setProducts(result.products);
-              ToastAndroid.show(
-                "0 products matched. Showing randomly",
-                ToastAndroid.LONG
-              );
-              setIsLoading(false);
-            } catch (error) {
-              ToastAndroid.show(error, ToastAndroid.SHORT);
-              setIsLoading(false);
-            }
-          }
-          setIsLoading(false);
-        } catch (error) {
-          ToastAndroid.show(error, ToastAndroid.SHORT);
-          setIsLoading(false);
-        }
-      }
-    };
-
     fetchProducts();
   }, []);
 
@@ -173,21 +219,22 @@ const Shop = ({ route }) => {
                   ]}
                   onPress={() =>
                     navigation.navigate("Product", {
-                      title: items.title,
-                      pId: items.id,
+                      title: items.productName,
+                      pId: items._id,
                     })
                   }
                 >
                   <Image
                     style={styles.image}
-                    source={{ uri: items.thumbnail }}
+                    // source={{ uri: items.thumbnail }}
+                    source={require("../images/apparels/shirt1.jpg")}
                   />
                   <View style={styles.textContainer}>
                     <Text
                       style={[styles.title, { color: colors.light.text }]}
                       numberOfLines={1}
                     >
-                      {items.title}
+                      {items.productName}
                     </Text>
                     <Text
                       style={[
@@ -196,7 +243,7 @@ const Shop = ({ route }) => {
                       ]}
                       numberOfLines={1}
                     >
-                      {items.description}
+                      {items.productLongDesc}
                     </Text>
                     <Text
                       style={[styles.price, { color: colors.light.text }]}
@@ -212,18 +259,18 @@ const Shop = ({ route }) => {
                       >
                         ₹
                         {parseFloat(
-                          (items.price * items.discountPercentage) / 100 +
-                            items.price
+                          (items.productPrice * items.productPrice) / 100 +
+                            items.productPrice
                         ).toFixed(2)}
                       </Text>{" "}
-                      ₹{items.price}{" "}
+                      ₹{items.productPrice}{" "}
                       <Text
                         style={{
                           color: colors.light.red,
                           fontWeight: "normal",
                         }}
                       >
-                        {parseInt(items.discountPercentage)}% Off
+                        {parseInt(items.productStock)}% Off
                       </Text>
                     </Text>
                     <Text
@@ -235,7 +282,7 @@ const Shop = ({ route }) => {
                         size={12}
                         color={colors.light.red}
                       />
-                      {items.rating}
+                      {/* {items.rating} */} 4.5
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -305,7 +352,7 @@ const Shop = ({ route }) => {
                 <Text style={styles.listViewText}>Popularity</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.listView}>
-                <Text style={styles.listViewText}>Newest Firts</Text>
+                <Text style={styles.listViewText}>Newest First</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.listView}>
                 <Text style={styles.listViewText}>Price - Low to High</Text>
@@ -376,6 +423,7 @@ const Shop = ({ route }) => {
               </View>
               <View
                 style={{
+                  width: "100%",
                   flexDirection: "row",
                   justifyContent: "space-around",
                   alignItems: "center",
@@ -383,6 +431,8 @@ const Shop = ({ route }) => {
                   paddingVertical: 9,
                   borderTopWidth: 1,
                   borderColor: colors.light.secondary,
+                  position: "absolute",
+                  bottom: 0,
                 }}
               >
                 <TouchableOpacity
@@ -477,6 +527,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     paddingHorizontal: 10,
+    height: 200,
   },
   tabButton: {
     paddingHorizontal: 15,
@@ -554,6 +605,16 @@ const styles = StyleSheet.create({
     backgroundColor: "#ddd",
     paddingLeft: 2.5,
     paddingTop: 3,
+  },
+  filterTab: {
+    width: 270,
+    margin: 10,
+    padding: 5,
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
   },
 });
 

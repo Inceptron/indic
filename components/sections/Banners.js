@@ -7,7 +7,7 @@ const images = [
   require("../../images/banners/banner1.jpg"),
   require("../../images/banners/banner3.jpg"),
   require("../../images/banners/banner2.jpeg"),
-  require("../../images/banners/banner4.png"),
+  require("../../images/banners/banner4.jpg"),
 ];
 
 const Banners = () => {
@@ -17,30 +17,36 @@ const Banners = () => {
   const screenWidth = Dimensions.get("window").width;
 
   const scrollViewRef = useRef(null);
-  const [scrollPosition, setScrollPosition] = useState(0);
-  const scrollInterval = useRef(null);
-  const scrollSpeed = 0;
-  const contentWidth = 1570;
+  const [scrollPosition, setScrollPosition] = useState(screenWidth);
+  const scrollSpeed = 3000; // Adjust as needed
+  const contentWidth = screenWidth * (images.length + 2);
 
   useEffect(() => {
-    scrollInterval.current = setInterval(() => {
-      const nextScrollPosition = scrollPosition + 1;
+    const timer = setInterval(() => {
+      const nextScrollPosition = scrollPosition + screenWidth;
 
       if (nextScrollPosition >= contentWidth) {
-        setScrollPosition(0);
-        scrollViewRef.current.scrollTo({ x: 0, y: 0, animated: false });
+        // Transition to the first duplicated image
+        scrollViewRef.current &&
+          scrollViewRef.current.scrollTo({
+            x: screenWidth,
+            y: 0,
+            animated: true,
+          });
+        setScrollPosition(screenWidth);
       } else {
         setScrollPosition(nextScrollPosition);
-        scrollViewRef.current.scrollTo({
-          x: nextScrollPosition,
-          y: 0,
-          animated: false,
-        });
+        scrollViewRef.current &&
+          scrollViewRef.current.scrollTo({
+            x: nextScrollPosition,
+            y: 0,
+            animated: true,
+          });
       }
     }, scrollSpeed);
 
     return () => {
-      clearInterval(scrollInterval.current);
+      clearInterval(timer);
     };
   }, [scrollPosition]);
 
@@ -49,9 +55,16 @@ const Banners = () => {
       ref={scrollViewRef}
       horizontal
       pagingEnabled
-      showsHorizontalScrollIndicator={false}
+      showsHorizontalScrollIndicator={true}
       contentContainerStyle={{ width: contentWidth }}
     >
+      <Image
+        style={{
+          width: screenWidth,
+          height: 200,
+        }}
+        source={images[images.length - 1]}
+      />
       {images.map((imageSource, index) => (
         <Image
           key={index}
@@ -62,6 +75,13 @@ const Banners = () => {
           source={imageSource}
         />
       ))}
+      <Image
+        style={{
+          width: screenWidth,
+          height: 200,
+        }}
+        source={images[0]}
+      />
     </ScrollView>
   );
 };

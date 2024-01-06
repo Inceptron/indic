@@ -1,21 +1,57 @@
-import React, { useContext } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { colors } from "../../config/theme";
-import { ThemeContext } from "../../context/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
+import AWS from "aws-sdk";
 
-const CardComponent = ({ imageSource, title, description }) => {
-  const { theme } = useContext(ThemeContext);
-  let activeColors = colors[theme.mode];
-
+const CardComponent = ({ id, imageSource, title, description }) => {
   const navigation = useNavigation();
+
+  const [imageURL, setImageURL] = useState(null);
+
+  const bucketName = "naahar";
+  const signedUrlExpireSeconds = 60 * 1;
+
+  const getImages = () => {
+    AWS.config.update({
+      accessKeyId: "AKIAZLRNTB3H7QGOH4VB",
+      secretAccessKey: "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",
+      region: "ap-south-1",
+    });
+
+    const s3 = new AWS.S3();
+
+    s3.getSignedUrl(
+      "getObject",
+      {
+        Bucket: bucketName,
+        Key: encodeURI(imageSource),
+        Expires: signedUrlExpireSeconds,
+      },
+      (err, url) => {
+        if (err) {
+          console.error("Error fetching signed URL:", err);
+        } else {
+          setImageURL(url);
+        }
+      }
+    );
+  };
+
+  useEffect(() => {
+    getImages();
+  }, []);
 
   return (
     <TouchableOpacity
       style={[styles.container, { backgroundColor: colors.light.secondary }]}
-      onPress={() => navigation.navigate("Shop", { title: title })}
+      onPress={() => navigation.navigate("Product", { title: title, pId: id })}
     >
-      <Image style={styles.image} source={imageSource} />
+      <Image
+        style={styles.image}
+        // source={{ uri: imageURL }}
+        source={require("../../images/decors/decor2.jpeg")}
+      />
       <View style={styles.contentContainer}>
         <Text
           style={[styles.title, { color: colors.light.text }]}
@@ -65,10 +101,10 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 14,
     color: "#777",
-    flexWrap: "wrap", // Add this line to wrap the text
-    overflow: "hidden", // Add this line to hide overflowing text
-    lineHeight: 18, // Add this line to improve line spacing
-    maxHeight: 36, // Add this line to limit the number of lines to 2
+    flexWrap: "wrap",
+    overflow: "hidden",
+    lineHeight: 18,
+    maxHeight: 36,
   },
 });
 

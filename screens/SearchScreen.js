@@ -1,17 +1,46 @@
 import React, { useContext, useState, useRef, useEffect } from "react";
-import { View, TextInput } from "react-native";
+import {
+  View,
+  TextInput,
+  Modal,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  Image,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { colors } from "../config/theme";
-import { ThemeContext } from "../context/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
+import RangeSlider from "react-native-range-slider-expo";
 
 const SearchScreen = () => {
-  const { theme } = useContext(ThemeContext);
-  let activeColors = colors[theme.mode];
   const navigation = useNavigation();
   const [searchText, setSearchText] = useState("");
+  const [selectedValue, setSelectedValue] = useState(null);
+  const [range, setRange] = useState({ min: 500, max: 10000 });
 
-  const inputRef = useRef(null);
+  const handlePriceValueChange = (newRange) => {
+    setRange(newRange);
+    // Perform any additional actions when the value changes
+  };
+
+  const toValueOnChange = (newMax) => {
+    setRange((prevRange) => ({ ...prevRange, max: newMax }));
+  };
+
+  const fromValueOnChange = (newMin) => {
+    setRange((prevRange) => ({ ...prevRange, min: newMin }));
+  };
+
+  const items = [
+    { label: "Option 1", value: "option1" },
+    { label: "Option 2", value: "option2" },
+    { label: "Option 3", value: "option3" },
+  ];
+
+  const inputRef = React.createRef();
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -39,6 +68,7 @@ const SearchScreen = () => {
           alignItems: "center",
           borderBottomWidth: 0.5,
           borderColor: colors.light.secondary,
+          backgroundColor: colors.light.primary,
         }}
       >
         <View
@@ -117,8 +147,37 @@ const SearchScreen = () => {
           </View>
         </View>
       </View>
+      <View
+        style={{
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <TouchableOpacity
+          style={{
+            padding: 10,
+            paddingHorizontal: 30,
+            borderRadius: 5,
+            backgroundColor: colors.light.accent,
+            marginTop: 50,
+          }}
+          onPress={() => navigation.navigate("Filter")}
+        >
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: "400",
+              color: colors.light.primary,
+            }}
+          >
+            Filter by Category & Price
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
 export default SearchScreen;
+
+const styles = StyleSheet.create({});

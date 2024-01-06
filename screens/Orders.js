@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import RNUpiPayment from "react-native-upi-payment";
 
 import { colors } from "../config/theme";
 
@@ -11,57 +10,13 @@ import { auth } from "../config/firebase";
 const Orders = () => {
   const navigation = useNavigation();
 
-  const [orderTxnId, setOrderTxnId] = useState("");
-  const [orderStatus, setOrderStatus] = useState("");
-  const [orderMessage, setOrderMessage] = useState("");
-
-  const makePayment = () => {
-    RNUpiPayment.initializePayment(
-      {
-        vpa: "8340257758@paytm",
-        payeeName: "Ashish Kumar",
-        amount: "1",
-        transactionRef: "aasf-332-aoei-fn",
-      },
-      successCallback,
-      failureCallback
-    );
-  };
-
-  const failureCallback = (data) => {
-    console.log(data);
-    // in case no action taken
-    if (data["status"] == "FAILURE") {
-      setOrderStatus("FAILURE");
-      setOrderMessage(data["message"]);
-    }
-    // in case of googlePay
-    else if (data["Status"] == "FAILURE") {
-      setOrderStatus("FAILURE");
-      setOrderMessage("App closed without doing payment");
-    }
-    // in case of phonepe
-    else if (data["Status"] == "Failed") {
-      setOrderStatus("Failed");
-      setOrderMessage("App closed without doing payment");
-    }
-    // in case of phonepe
-    else if (data["Status"] == "Submitted") {
-      setOrderStatus("Submitted");
-      setOrderMessage("transaction done but pending");
-    }
-    // any other case than above mentioned
-    else {
-      setOrderStatus("FAILURE");
-      setOrderMessage(data[Status]);
-    }
-  };
-  const successCallback = (data) => {
-    //
-    console.log(data);
-    setOrderTxnId(data["txnId"]);
-    setOrderStatus("SUCCESS");
-    setOrderMessage("Succccessfull payment");
+  const connectToMongoDB = async () => {
+    fetch("https://indic-fusion.vercel.app/api/products")
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data[0]);
+      })
+      .catch((error) => console.error("Error fetching options:", error));
   };
 
   useEffect(() => {
@@ -95,7 +50,7 @@ const Orders = () => {
         Orders
       </Text>
       <TouchableOpacity
-        onPress={() => navigation.navigate("Home")}
+        onPress={() => connectToMongoDB()}
         style={{
           backgroundColor: colors.light.accent,
           paddingHorizontal: 20,

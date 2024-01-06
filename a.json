@@ -1,0 +1,39 @@
+[
+    {
+        "_id": "653ce55c3b7ca223cf041b6e",
+        "createdDate": "2023-10-28T00:00:00.000Z",
+        "finalPrice": {
+            "$numberDecimal": "1785"
+        },
+        "keywords": [
+            "beer mugs",
+            "cups",
+            "black potter"
+        ],
+        "leadTime": 5,
+        "optionId": "f933a5b2-906b-4349-8c5f-f3609371c230",
+        "popularity": 1,
+        "productCartDesc": "Pair of black-pottery Beer Mugs and Cups",
+        "productCategory": "Black stone pottery",
+        "productId": "f155742c-8bf3-4146-bcae-bc859a658753",
+        "productImage": [
+            "Accessories/CupsAndMugs/BeerMug_Cup_Pair.png"
+        ],
+        "productLive": false,
+        "productLongDesc": "Black stone pottery- also known as Black Pottery; is prized for its unique qualities. It boasts exceptional heat retention and even distribution- making it ideal for slow cooking. Its natural minerals add flavor to food and enhance its nutritional value. Additionally- its sleek black finish adds an aesthetic touch to tableware.",
+        "productName": "BeerMug_Cup_Pair",
+        "productPrice": {
+            "$numberDecimal": "1785"
+        },
+        "productShortDesc": "Pair of black-pottery Beer Mugs and Cups",
+        "productSize": "Mug -Diameter: 10 cm , Height: 9cm Cup- Diameter: 8 cm , Height: 5cm",
+        "productSku": "d38c56c3-b848-4625-b586-9eded698687e",
+        "productStock": 1,
+        "productUnlimited": false,
+        "productVendorId": "f8302f04-849e-43cb-8b19-8aeef845a63d",
+        "productWeight": {
+            "$numberDecimal": "300"
+        },
+        "timeZone": "Asia/Kolkata"
+    }
+]

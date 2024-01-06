@@ -1,12 +1,8 @@
 import React, { useContext } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { colors } from "../../config/theme";
-import { ThemeContext } from "../../context/ThemeContext";
 
 const CategoryCard = ({ title, onPress, isActive, index }) => {
-  const { theme } = useContext(ThemeContext);
-  let activeColors = colors[theme.mode];
-
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -14,6 +10,7 @@ const CategoryCard = ({ title, onPress, isActive, index }) => {
         flexDirection: "column",
         alignItems: "center",
       }}
+      key={index}
     >
       <Image
         style={styles.image}
@@ -64,9 +61,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  title: {
-    fontSize: 16,
-    fontWeight: "bold",
+  text: {
+    fontSize: 12,
   },
   activeTitle: {
     color: "#FFFFFF",

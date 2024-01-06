@@ -9,15 +9,18 @@ import {
   ScrollView,
   StyleSheet,
   Dimensions,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
   collection,
   query,
+  getDoc,
   getDocs,
   onSnapshot,
   doc,
   deleteDoc,
+  deleteField,
 } from "firebase/firestore";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { auth, db } from "../config/firebase";
@@ -35,6 +38,35 @@ const Basket = () => {
   const [products, setProducts] = useState([]);
   const [documentCount, setDocumentCount] = useState(0);
   const [isAddress, setIsAddress] = useState(false);
+  const [address, setAddress] = useState({});
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    getBasket(user.email);
+    setRefreshing(false);
+  };
+
+  const getAddress = async () => {
+    try {
+      const addressDocRef = doc(db, "address", user.email);
+      const addressDocSnapshot = await getDoc(addressDocRef);
+
+      if (addressDocSnapshot.exists()) {
+        const addressData = addressDocSnapshot.data();
+        setAddress(addressData);
+        setIsAddress(true);
+      } else {
+        // No address found for the user
+        console.log("No address found for the user");
+        setIsAddress(false);
+      }
+    } catch (error) {
+      console.error("Error checking address existence:", error.message);
+      return false;
+    }
+  };
 
   const getBasket = async (email) => {
     onAuthStateChanged(auth, (authUser) => {
@@ -52,21 +84,20 @@ const Basket = () => {
       if (basketData) {
         setBasket(basketData);
         setDocumentCount(countedDocs);
-        const productItems = [];
         await Promise.all(
           basket.map(async (item) => {
-            const url = "https://dummyjson.com/products/" + item.productId;
-            try {
-              const response = await fetch(url);
-              const result = await response.json();
-              productItems.push(result);
-            } catch (error) {
-              ToastAndroid.show(error, ToastAndroid.SHORT);
-            }
+            fetch("https://indic-fusion.vercel.app/api/products")
+              .then((response) => response.json())
+              .then((data) => {
+                setProducts(data);
+                setIsLoading(false);
+              })
+              .catch((error) => {
+                ToastAndroid.show(error, ToastAndroid.SHORT);
+                setIsLoading(false);
+              });
           })
         );
-        setProducts(productItems);
-        setIsLoading(false);
       }
     });
   };
@@ -83,6 +114,28 @@ const Basket = () => {
       });
   };
 
+  const placeOrder = async () => {
+    // navigation.navigate("Payment", {
+    //   paymentSignedUrl:
+    //     "https://test.instamojo.com/@rahul_sharma_d558e/27dd4d4aae284d6fa72e64db43d7f142",
+    // });
+
+    const subCollRef = collection(db, "users", user.email, "basket");
+
+    const querySnapshot = await getDocs(subCollRef);
+
+    const deletePromises = querySnapshot.docs.map(async (doc) => {
+      await deleteDoc(doc.ref);
+    });
+
+    await Promise.all(deletePromises);
+
+    deleteField(doc(collection(db, "users", user.email)), "basket");
+
+    ToastAndroid.show("Order Placed.", ToastAndroid.BOTTOM);
+    getBasket(user.email);
+  };
+
   useEffect(() => {
     onAuthStateChanged(auth, (authUser) => {
       if (authUser) {
@@ -92,6 +145,8 @@ const Basket = () => {
         console.log("User is signed out.");
       }
     });
+    getAddress();
+    onRefresh();
   }, []);
 
   if (isLoading) {
@@ -109,7 +164,11 @@ const Basket = () => {
 
   return (
     <>
-      <ScrollView>
+      <ScrollView
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <View
           style={{
             backgroundColor: colors.light.secondary,
@@ -134,19 +193,25 @@ const Basket = () => {
                     marginBottom: 10,
                   }}
                 >
-                  Ashish Kumar
+                  {address.name}
                 </Text>
                 <Text style={{ color: colors.light.gray }}>
-                  Hanuman Mandir, Koyari Tola, Piri
+                  {address.landmark}
                 </Text>
-                <Text style={{ color: colors.light.gray }}>Piri Barkakana</Text>
                 <Text style={{ color: colors.light.gray }}>
-                  Ramgarh, Jharkhand 829102
+                  {address.address}
+                </Text>
+                <Text style={{ color: colors.light.gray }}>
+                  {address.city +
+                    ", " +
+                    address.state +
+                    " - " +
+                    address.pinCode}
                 </Text>
                 <Text style={{ color: colors.light.gray, marginTop: 10 }}>
                   Mobile:{" "}
                   <Text style={{ color: colors.light.text, fontWeight: "600" }}>
-                    8340257758
+                    +91 {address.mobile}
                   </Text>
                 </Text>
                 <TouchableOpacity
@@ -160,6 +225,7 @@ const Basket = () => {
                     justifyContent: "center",
                     alignItems: "center",
                   }}
+                  onPress={() => navigation.navigate("Address")}
                 >
                   <Text>Edit Address</Text>
                 </TouchableOpacity>
@@ -178,227 +244,251 @@ const Basket = () => {
                     justifyContent: "center",
                     alignItems: "center",
                   }}
+                  onPress={() => navigation.navigate("Address")}
                 >
                   <Text>Add Address</Text>
                 </TouchableOpacity>
               </View>
             )}
           </View>
-          {products.map((item, id) => (
+          {basket.map((bItem, id) => (
+            <View key={id}>
+              {products.map((item, id) =>
+                bItem.productId == item._id ? (
+                  <View
+                    key={id}
+                    style={{
+                      width: "100%",
+                      height: 200,
+                      paddingVertical: 5,
+                      paddingHorizontal: 15,
+                      marginVertical: 5,
+                      backgroundColor: colors.light.primary,
+                      flexDirection: "row",
+                      justifyContent: "flex-start",
+                    }}
+                  >
+                    <TouchableOpacity
+                      onPress={() =>
+                        navigation.navigate("Product", {
+                          title: item.productName,
+                          pId: item._id,
+                        })
+                      }
+                      style={{
+                        width: "35%",
+                        height: 180,
+                      }}
+                    >
+                      <Image
+                        style={styles.image}
+                        // source={{ uri: item.imageURL }}
+                        source={require("../images/decors/decor3.jpeg")}
+                      />
+                    </TouchableOpacity>
+                    <View
+                      style={{
+                        width: "65%",
+                        paddingHorizontal: 10,
+                        alignContent: "flex-start",
+                      }}
+                    >
+                      <View
+                        style={{
+                          marginBottom: 5,
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Text style={{ fontSize: 16, fontWeight: "600" }}>
+                          {item.productName}
+                        </Text>
+                        <Ionicons
+                          name="trash-outline"
+                          size={15}
+                          color="black"
+                          onPress={() => deleteProduct(item._id)}
+                        />
+                      </View>
+                      <Text numberOfLines={3} style={{ fontSize: 12 }}>
+                        {item.productCartDesc}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: colors.light.gray,
+                          marginVertical: 3,
+                        }}
+                      >
+                        BRAND:{" "}
+                        <Text style={{ color: colors.light.text }}>
+                          {item.brand}
+                        </Text>
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: "600",
+                          color: colors.light.red,
+                          marginVertical: 2,
+                        }}
+                      >
+                        ₹{item.finalPrice}{" "}
+                        <Text
+                          style={{
+                            color: colors.light.text,
+                            textDecorationLine: "line-through",
+                          }}
+                        >
+                          ₹
+                          {parseFloat(
+                            (item.finalPrice * item.finalPrice) / 100 +
+                              item.finalPrice
+                          ).toFixed(2)}
+                        </Text>
+                        {parseInt(item.productStock)}% Off
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: "600",
+                          color: colors.light.text,
+                          marginVertical: 3,
+                        }}
+                      >
+                        14 Days{" "}
+                        <Text
+                          style={{
+                            color: colors.light.gray,
+                            fontWeight: "normal",
+                          }}
+                        >
+                          return available
+                        </Text>
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: "normal",
+                          color: colors.light.gray,
+                          marginVertical: 3,
+                        }}
+                      >
+                        Delivery by:{" "}
+                        <Text
+                          style={{
+                            color: colors.light.text,
+                            fontWeight: "600",
+                          }}
+                        >
+                          30 August
+                        </Text>
+                      </Text>
+                    </View>
+                  </View>
+                ) : null
+              )}
+            </View>
+          ))}
+          {documentCount != 0 ? (
             <View
-              key={id}
               style={{
                 width: "100%",
-                height: 200,
                 paddingVertical: 5,
                 paddingHorizontal: 15,
                 marginVertical: 5,
                 backgroundColor: colors.light.primary,
-                flexDirection: "row",
-                justifyContent: "flex-start",
               }}
             >
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate("Product", {
-                    title: item.title,
-                    pId: item.id,
-                  })
-                }
-                style={{
-                  width: "35%",
-                  height: 180,
-                }}
-              >
-                <Image style={styles.image} source={{ uri: item.thumbnail }} />
-              </TouchableOpacity>
+              <Text style={{ fontSize: 15, fontWeight: "600" }}>
+                Product details{" "}
+                <Text style={{ fontWeight: "normal" }}>
+                  ({documentCount} items)
+                </Text>
+              </Text>
+              <View style={styles.horizontalLine}></View>
               <View
                 style={{
-                  width: "65%",
-                  paddingHorizontal: 10,
-                  alignContent: "flex-start",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginVertical: 3,
                 }}
               >
-                <View
-                  style={{
-                    marginBottom: 5,
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Text style={{ fontSize: 16, fontWeight: "600" }}>
-                    {item.title}
-                  </Text>
-                  <Ionicons
-                    name="trash-outline"
-                    size={15}
-                    color="black"
-                    onPress={() => deleteProduct(item.id)}
-                  />
-                </View>
-                <Text numberOfLines={3} style={{ fontSize: 12 }}>
-                  {item.description}
+                <Text style={{ fontSize: 13, color: colors.light.gray }}>
+                  Total MRP
                 </Text>
+                <Text style={{ fontSize: 13, color: colors.light.text }}>
+                  ₹4657
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginVertical: 3,
+                }}
+              >
+                <Text style={{ fontSize: 13, color: colors.light.gray }}>
+                  Discount on MRP
+                </Text>
+                <Text style={{ fontSize: 13, color: colors.light.text }}>
+                  -₹2174
+                </Text>
+              </View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginVertical: 3,
+                }}
+              >
+                <Text style={{ fontSize: 13, color: colors.light.gray }}>
+                  Convenience Fee
+                </Text>
+                <Text style={{ fontSize: 13, color: colors.light.text }}>
+                  ₹50
+                </Text>
+              </View>
+              <View style={styles.horizontalLine}></View>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginVertical: 3,
+                }}
+              >
                 <Text
                   style={{
-                    fontSize: 12,
-                    color: colors.light.gray,
-                    marginVertical: 3,
-                  }}
-                >
-                  BRAND:{" "}
-                  <Text style={{ color: colors.light.text }}>{item.brand}</Text>
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: "600",
-                    color: colors.light.red,
-                    marginVertical: 2,
-                  }}
-                >
-                  ₹{item.price}{" "}
-                  <Text
-                    style={{
-                      color: colors.light.text,
-                      textDecorationLine: "line-through",
-                    }}
-                  >
-                    ₹
-                    {parseFloat(
-                      (item.price * item.discountPercentage) / 100 + item.price
-                    ).toFixed(2)}
-                  </Text>
-                  {parseInt(item.discountPercentage)}% Off
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    fontWeight: "600",
+                    fontSize: 16,
                     color: colors.light.text,
-                    marginVertical: 3,
+                    fontWeight: "600",
                   }}
                 >
-                  14 Days{" "}
-                  <Text
-                    style={{ color: colors.light.gray, fontWeight: "normal" }}
-                  >
-                    return available
-                  </Text>
+                  Total
                 </Text>
                 <Text
                   style={{
-                    fontSize: 12,
-                    fontWeight: "normal",
-                    color: colors.light.gray,
-                    marginVertical: 3,
+                    fontSize: 16,
+                    color: colors.light.text,
+                    fontWeight: "600",
                   }}
                 >
-                  Delivery by:{" "}
-                  <Text style={{ color: colors.light.text, fontWeight: "600" }}>
-                    30 August
-                  </Text>
+                  ₹2150
                 </Text>
               </View>
             </View>
-          ))}
-          <View
-            style={{
-              width: "100%",
-              paddingVertical: 5,
-              paddingHorizontal: 15,
-              marginVertical: 5,
-              backgroundColor: colors.light.primary,
-            }}
-          >
-            <Text style={{ fontSize: 15, fontWeight: "600" }}>
-              Product details{" "}
-              <Text style={{ fontWeight: "normal" }}>
-                ({documentCount} items)
-              </Text>
-            </Text>
-            <View style={styles.horizontalLine}></View>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginVertical: 3,
-              }}
-            >
-              <Text style={{ fontSize: 13, color: colors.light.gray }}>
-                Total MRP
-              </Text>
-              <Text style={{ fontSize: 13, color: colors.light.text }}>
-                ₹4657
-              </Text>
-            </View>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginVertical: 3,
-              }}
-            >
-              <Text style={{ fontSize: 13, color: colors.light.gray }}>
-                Discount on MRP
-              </Text>
-              <Text style={{ fontSize: 13, color: colors.light.text }}>
-                -₹2174
-              </Text>
-            </View>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginVertical: 3,
-              }}
-            >
-              <Text style={{ fontSize: 13, color: colors.light.gray }}>
-                Convenience Fee
-              </Text>
-              <Text style={{ fontSize: 13, color: colors.light.text }}>
-                ₹50
-              </Text>
-            </View>
-            <View style={styles.horizontalLine}></View>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginVertical: 3,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: colors.light.text,
-                  fontWeight: "600",
-                }}
-              >
-                Total
-              </Text>
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: colors.light.text,
-                  fontWeight: "600",
-                }}
-              >
-                ₹2150
-              </Text>
-            </View>
-          </View>
+          ) : null}
         </View>
       </ScrollView>
       <View style={styles.bottom}>
         <TouchableOpacity
           style={[styles.bottomBtn, { backgroundColor: colors.light.pink }]}
-          onPress={() => navigation.navigate("Checkout")}
+          onPress={() => placeOrder()}
         >
           <Text
             style={{

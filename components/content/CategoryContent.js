@@ -1,49 +1,34 @@
-import React from "react";
-import { ScrollView } from "react-native";
+import React, { useState, useEffect } from "react";
+import { ScrollView, View, Text } from "react-native";
 import CardComponent from "../cards/CardComponent";
 
 const CategoryContent = ({ selectedCategory }) => {
-  const categoryImages = {
-    Apparels: [
-      require("../../images/apparels/shirt1.jpg"),
-      require("../../images/apparels/tshirt.jpeg"),
-      require("../../images/apparels/jeans.jpeg"),
-    ],
-    Foods: [
-      require("../../images/food/burger.jpeg"),
-      require("../../images/food/chicken.jpeg"),
-      require("../../images/food/paneer.jpeg"),
-    ],
-    Decoration: [
-      require("../../images/sample_image_1.jpg"),
-      require("../../images/sample_image_2.jpg"),
-      require("../../images/sample_image_3.jpg"),
-    ],
-    Others: [
-      require("../../images/sample_image_4.jpg"),
-      require("../../images/food/chicken.jpeg"),
-      require("../../images/apparels/jeans.jpeg"),
-    ],
-    // Add more categories and their respective images arrays
-  };
+  const [products, setProducts] = useState([]);
 
-  const images = categoryImages[selectedCategory] || [];
+  useEffect(() => {
+    fetch("https://indic-fusion.vercel.app/api/products")
+      .then((response) => response.json())
+      .then((data) => {
+        setProducts(data);
+      })
+      .catch((error) => console.error("Error fetching products:", error));
+  }, []);
 
   return (
-    <ScrollView
-      vertical
-      //try horizontal instead of vertical
-      showsHorizontalScrollIndicator={false}
-    >
-      {images.map((imageSource, index) => (
-        <CardComponent
-          key={index}
-          index={index}
-          imageSource={imageSource}
-          title={`Sample Title - ${selectedCategory}`}
-          description={`This is a sample description for the ${selectedCategory} card component.`}
-        />
-      ))}
+    <ScrollView vertical showsHorizontalScrollIndicator={false}>
+      {products
+        .filter((product) => product.optionId === selectedCategory)
+        .slice(0, 7)
+        .map((product, index) => (
+          <CardComponent
+            key={index}
+            index={index}
+            imageSource={product.productImage}
+            title={product.productName}
+            id={product._id}
+            description={product.productLongDesc}
+          />
+        ))}
     </ScrollView>
   );
 };

@@ -1,21 +1,57 @@
-import React, { useContext } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { colors } from "../../config/theme";
-import { ThemeContext } from "../../context/ThemeContext";
 import { useNavigation } from "@react-navigation/native";
+import AWS from "aws-sdk";
 
-const CardComponent = ({ imageSource, title, description }) => {
-  const { theme } = useContext(ThemeContext);
-  let activeColors = colors[theme.mode];
-
+const CardComponent = ({ imageSource, title, description, id }) => {
   const navigation = useNavigation();
+
+  const [imageURL, setImageURL] = useState(null);
+
+  const bucketName = "naahar";
+  const signedUrlExpireSeconds = 60 * 1;
+
+  const getImages = () => {
+    AWS.config.update({
+      accessKeyId: "AKIAZLRNTB3H7QGOH4VB",
+      secretAccessKey: "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",
+      region: "ap-south-1",
+    });
+
+    const s3 = new AWS.S3();
+
+    s3.getSignedUrl(
+      "getObject",
+      {
+        Bucket: bucketName,
+        Key: encodeURI(imageSource),
+        Expires: signedUrlExpireSeconds,
+      },
+      (err, url) => {
+        if (err) {
+          console.error("Error fetching signed URL:", err);
+        } else {
+          setImageURL(url);
+        }
+      }
+    );
+  };
+
+  useEffect(() => {
+    getImages();
+  }, []);
 
   return (
     <TouchableOpacity
-      style={[styles.container, { backgroundColor: colors.light.secondary }]}
-      onPress={() => navigation.navigate("Shop", { title: "Todays Deals" })}
+      style={[styles.container, { backgroundColor: colors.light.primary }]}
+      onPress={() => navigation.navigate("Product", { title, pId: id })}
     >
-      <Image style={styles.image} source={imageSource} />
+      <Image
+        style={styles.image}
+        // source={{ uri: imageURL }}
+        source={require("../../images/decors/decor3.jpeg")}
+      />
       <View style={styles.contentContainer}>
         <Text
           style={[styles.title, { color: colors.light.text }]}
@@ -38,7 +74,7 @@ const styles = StyleSheet.create({
   container: {
     width: 200,
     backgroundColor: "#FFFFFF",
-    borderRadius: 0,
+    borderRadius: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -46,9 +82,10 @@ const styles = StyleSheet.create({
     elevation: 3,
     flexDirection: "column",
     margin: 10,
+    padding: 8,
   },
   image: {
-    width: 200,
+    width: 184,
     height: 100,
     borderRadius: 0,
   },

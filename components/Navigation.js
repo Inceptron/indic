@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import SettingsScreen from "../screens/Settings";
-import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+import { View, TouchableOpacity, Text, StyleSheet, Image } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,6 +18,9 @@ import Product from "../screens/Product";
 import Orders from "../screens/Orders";
 import SearchScreen from "../screens/SearchScreen";
 import Checkout from "../screens/Checkout";
+import Filter from "../screens/Filter";
+import Payment from "../screens/Payment";
+import Address from "../screens/Address";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -109,7 +112,7 @@ export default function Navigation() {
         name="root"
         component={MyTabs}
         options={{
-          title: "Indic Fusion",
+          title: "Hill Hues",
           headerShown: false,
         }}
       />
@@ -136,7 +139,10 @@ export default function Navigation() {
           headerShown: false,
         }}
       />
+      <Stack.Screen name="Filter" component={Filter} />
       <Stack.Screen name="Checkout" component={Checkout} />
+      <Stack.Screen name="Payment" component={Payment} />
+      <Stack.Screen name="Address" component={Address} />
     </Stack.Navigator>
   );
 }
@@ -154,18 +160,22 @@ function MyTabs() {
             style={{
               alignItems: "center",
               marginHorizontal: 15,
-              backgroundColor: colors.light.secondary,
-              borderRadius: 50,
-              paddingVertical: 6,
-              paddingHorizontal: 7,
             }}
           >
-            <Ionicons
-              name="search-outline"
-              size={25}
-              color={colors.light.tint}
-              onPress={() => navigation.navigate("SearchScreen")}
-            />
+            {/* <Image
+              style={{
+                width: 140,
+                height: 38,
+              }}
+              source={require("../images/cover.png")}
+            /> */}
+            <Text
+              style={{
+                fontSize: 20,
+              }}
+            >
+              Naahar
+            </Text>
           </View>
         ),
         headerRight: () => (
@@ -187,9 +197,9 @@ function MyTabs() {
             />
           </View>
         ),
-        headerTitleAlign: "center",
+        headerTitleAlign: false,
         headerTitleStyle: {
-          fontSize: 18,
+          fontSize: 0,
         },
         headerStyle: {
           backgroundColor: colors.light.primary,
@@ -230,7 +240,9 @@ function MyTabs() {
       <Tab.Screen
         name="Home"
         component={HomeScreen}
-        options={{ headerTitle: "Indic Fusion" }}
+        options={{
+          headerTitle: "Hill Hues",
+        }}
       />
       <Tab.Screen
         name="Basket"

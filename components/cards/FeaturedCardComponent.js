@@ -1,62 +1,63 @@
-import React, { useContext } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Image, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { colors } from "../../config/theme";
 import { useNavigation } from "@react-navigation/native";
+import AWS from "aws-sdk";
 
-const FeaturedCardComponent = ({ imageSource, title, description }) => {
+const FeaturedCardComponent = ({ imageSource }) => {
   const navigation = useNavigation();
 
+  const [imageURL, setImageURL] = useState(null);
+
+  const bucketName = "naahar";
+  const signedUrlExpireSeconds = 60 * 1;
+
+  const getImages = () => {
+    AWS.config.update({
+      accessKeyId: "AKIAZLRNTB3H7QGOH4VB",
+      secretAccessKey: "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",
+      region: "ap-south-1",
+    });
+
+    const s3 = new AWS.S3();
+
+    s3.getSignedUrl(
+      "getObject",
+      {
+        Bucket: bucketName,
+        Key: encodeURI(imageSource),
+        Expires: signedUrlExpireSeconds,
+      },
+      (err, url) => {
+        if (err) {
+          console.error("Error fetching signed URL:", err);
+        } else {
+          setImageURL(url);
+        }
+      }
+    );
+  };
+
+  useEffect(() => {
+    getImages();
+  }, []);
+
   return (
-    <TouchableOpacity
-      style={[styles.container, { backgroundColor: colors.light.secondary }]}
-      onPress={() => navigation.navigate("Shop", { title: "Featured Items" })}
-    >
-      <Image style={styles.image} source={imageSource} />
-      <View style={styles.textContainer}>
-        <Text
-          style={[styles.title, { color: colors.light.text }]}
-          numberOfLines={1}
-        >
-          {title}
-        </Text>
-        <Text
-          style={[styles.description, { color: colors.light.tertiary }]}
-          numberOfLines={2}
-        >
-          {description}
-        </Text>
-      </View>
-    </TouchableOpacity>
+    <View>
+      <Image
+        style={styles.image}
+        // source={{ uri: imageURL }}
+        source={require("../../images/decors/decor1.jpg")}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
-    padding: 10,
-    width: "48%", // Adjust this value if necessary
-    marginBottom: 20,
-  },
   image: {
     width: "100%",
-    height: 150,
-    borderRadius: 10,
+    height: 200,
     marginBottom: 10,
-  },
-  title: {
-    fontWeight: "bold",
-    fontSize: 18,
-    marginBottom: 5,
-  },
-  description: {
-    fontSize: 14,
-    color: "#7a7a7a",
   },
 });
 

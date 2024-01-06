@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Indic Fusion",
-    "slug": "indic-fusion",
+    "name": "Naahar",
+    "slug": "naahar",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -19,22 +19,21 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.decoderashish.indicfusion"
+      "bundleIdentifier": "com.decoderashish.naahar"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.decoderashish.indicfusion",
-      "minSdkVersion": "18"
+      "package": "com.decoderashish.naahar"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {
-        "projectId": "d4bc5a35-b0c1-46ff-9ca4-4d0c6c990686"
+        "projectId": "c8e68811-111b-4fd4-8dbd-1ded624481d1"
       }
     }
   }
